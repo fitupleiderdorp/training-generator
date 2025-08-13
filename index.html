@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Training Schema Generator – Standalone</title>
+  <style>
+    :root{--bg:#0b0d12;--card:#121722;--muted:#8a94a7;--text:#e7ecf3;--accent:#4f8cff;--accent-2:#67d99a;--border:#1b2332}
+    *{box-sizing:border-box} html,body{height:100%} body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    .wrap{max-width:1080px;margin:0 auto;padding:24px}
+    h1{font-size:28px;margin:0 0 16px} h2{font-size:18px;margin:0 0 8px}
+    .row{display:grid;gap:12px}
+    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .grid-6{grid-template-columns:repeat(6,minmax(0,1fr))}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
+    label.small{font-size:12px;color:var(--muted)}
+    input,select,textarea,button{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1420;color:var(--text)}
+    textarea{resize:vertical}
+    button{cursor:pointer;background:var(--accent);border:0;font-weight:600}
+    button.secondary{background:#1a2233}
+    button.ghost{background:transparent;border:1px solid var(--border)}
+    .muted{color:var(--muted)}
+    .pill{display:inline-block;padding:.25rem .5rem;border:1px solid var(--border);border-radius:999px;font-size:12px;color:var(--muted)}
+    .flex{display:flex;gap:8px;align-items:center}
+    .between{justify-content:space-between}
+    .mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}
+    .table{width:100%;border-collapse:collapse;font-size:13px}
+    .table th,.table td{padding:8px 6px;border-top:1px solid var(--border);text-align:left}
+    .plan-day{border:1px solid var(--border);border-radius:14px;padding:12px}
+    .ex{display:grid;grid-template-columns:1fr 320px;gap:12px;border:1px solid var(--border);border-radius:12px;padding:10px}
+    .yt{position:relative;width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+    .yt iframe{width:100%;height:100%;border:0}
+    .svgbox{border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    .tabs{display:flex;gap:6px;margin:12px 0}
+    .tab-btn{padding:8px 10px;border-radius:10px;background:#121826;border:1px solid var(--border);cursor:pointer}
+    .tab-btn[aria-selected="true"]{background:#1a2233;color:#fff}
+    .hidden{display:none}
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
+    .modal.open{display:flex}
+    .modal .card{width:min(560px,92vw)}
+    .badge{display:inline-block;padding:2px 6px;border-radius:6px;background:#14213a;color:#9ab}
+    .note{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Training Schema Generator</h1>
+    <div class="tabs" role="tablist">
+      <button class="tab-btn" role="tab" aria-selected="true" data-tab="builder">Profiel & Generator</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-tab="plan">Plan</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-tab="log">Logboek</button>
+    </div>
+
+    <!-- BUILDER -->
+    <section id="tab-builder" class="card" role="tabpanel">
+      <h2>Profiel</h2>
+      <div class="row grid-6 mt12">
+        <div><label class="small">Naam</label><input id="name" placeholder="Naam"/></div>
+        <div><label class="small">Leeftijd</label><input id="age" placeholder="Leeftijd"/></div>
+        <div><label class="small">Geslacht</label>
+          <select id="sex"><option value="">-</option><option value="V">Vrouw</option><option value="M">Man</option></select>
+        </div>
+        <div><label class="small">Lengte (cm)</label><input id="height" placeholder="Bijv. 175"/></div>
+        <div><label class="small">Gewicht (kg)</label><input id="weight" placeholder="Bijv. 72"/></div>
+      </div>
+
+      <div class="row grid-4 mt12">
+        <div><label class="small">Sportdiscipline</label>
+          <select id="sport"></select>
+        </div>
+        <div><label class="small">Doelstelling</label>
+          <select id="goal"></select>
+        </div>
+        <div><label class="small">Dagen per week</label>
+          <select id="days"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select>
+        </div>
+        <div><label class="small">Traject (weken)</label>
+          <select id="weeks"><option>4</option><option>6</option><option selected>8</option><option>12</option><option>16</option></select>
+        </div>
+      </div>
+
+      <div class="row grid-4 mt12">
+        <div><label class="small">Ervaring</label>
+          <select id="exp"><option>Beginner</option><option selected>Gevorderd</option><option>Ervaren</option></select>
+        </div>
+        <div><label class="small">Locatie</label>
+          <select id="loc"><option>Sportschool</option><option>Thuis</option></select>
+        </div>
+        <div class="flex mt20"><input type="checkbox" id="functional" checked /><label for="functional">Functioneel trainen meenemen</label></div>
+        <div class="flex mt20"><input type="checkbox" id="freeMode" checked /><label for="freeMode">Gratis modus (YouTube/SVG demo)</label></div>
+      </div>
+
+      <div class="row grid-3 mt12">
+        <div class="card">
+          <h3 style="margin:0 0 8px">Beperkingen</h3>
+          <div class="row grid-3">
+            <label class="flex"><input type="checkbox" id="lim-knees"/> Knieën</label>
+            <label class="flex"><input type="checkbox" id="lim-lowerBack"/> Onderug</label>
+            <label class="flex"><input type="checkbox" id="lim-shoulder"/> Schouder</label>
+            <label class="flex"><input type="checkbox" id="lim-ankle"/> Enkel</label>
+            <label class="flex"><input type="checkbox" id="lim-wrist"/> Pols</label>
+          </div>
+        </div>
+        <div class="card" style="grid-column: span 2">
+          <h3 style="margin:0 0 8px">Progressive Overload</h3>
+          <div class="row grid-4">
+            <div>
+              <label class="small">Methode</label>
+              <select id="ol-method">
+                <option value="linear" selected>Linear % per week</option>
+                <option value="reps">Reps (double progression)</option>
+                <option value="rpe">RPE-gestuurd</option>
+              </select>
+            </div>
+            <div><label class="small">% per week (linear)</label><input id="ol-pct" type="number" value="2.5" step="0.5"/></div>
+            <div><label class="small">Deload elke N weken</label><input id="ol-deloadN" type="number" value="0"/></div>
+            <div><label class="small">Deload %</label><input id="ol-deloadPct" type="number" value="30"/></div>
+            <div><label class="small">Reps +/week (reps)</label><input id="ol-repUp" type="number" value="1"/></div>
+          </div>
+          <div class="note mt8">Linear: berekent een load-factor per week. Reps: +reps tot plafond; RPE: bouw doel-RPE op en verlaag bij deload.</div>
+        </div>
+      </div>
+
+      <div class="mt16"><label class="small">Notities</label><textarea id="notes" rows="3" placeholder="Apparatuur, voorkeuren, etc."></textarea></div>
+
+      <div class="flex mt16">
+        <button id="gen"><span>Genereer plan</span></button>
+        <button class="secondary" id="reset">Reset</button>
+      </div>
+    </section>
+
+    <!-- PLAN -->
+    <section id="tab-plan" class="card hidden" role="tabpanel">
+      <div class="flex between">
+        <h2 style="margin:0">Plan</h2>
+        <div class="flex">
+          <div id="sessions" class="pill">Sessies: 0</div>
+          <button class="secondary" id="export" title="Export CSV">Export CSV</button>
+        </div>
+      </div>
+      <div id="plan"></div>
+    </section>
+
+    <!-- LOG -->
+    <section id="tab-log" class="card hidden" role="tabpanel">
+      <h2>Logboek & Aantekeningen</h2>
+      <div class="note mt8">Gebruik "Log set/gewicht" in het plan of voeg hieronder handmatig toe.</div>
+      <div class="row grid-6 mt12">
+        <input id="log-ex" placeholder="Oefening"/>
+        <input id="log-set" type="number" min="1" value="1"/>
+        <input id="log-reps" type="number" min="1" value="8"/>
+        <input id="log-weight" type="number" min="0" step="0.5" value="0"/>
+        <input id="log-rpe" type="number" min="1" max="10" step="0.5" value="7.5"/>
+        <button id="log-add" class="secondary">Toevoegen</button>
+        <input id="log-notes" placeholder="Notitie (optioneel)" style="grid-column:1/-1"/>
+      </div>
+      <div id="loglist" class="mt16"></div>
+    </section>
+  </div>
+
+  <!-- QUICK LOG MODAL -->
+  <div id="modal" class="modal">
+    <div class="card">
+      <h2 style="margin-top:0">Log – <span id="m-exname"></span></h2>
+      <div class="row grid-4 mt12">
+        <div><label class="small">Set</label><input id="m-set" type="number" value="1" min="1"/></div>
+        <div><label class="small">Reps</label><input id="m-reps" type="number" value="8" min="1"/></div>
+        <div><label class="small">Gewicht (kg)</label><input id="m-weight" type="number" value="0" step="0.5" min="0"/></div>
+        <div><label class="small">RPE</label><input id="m-rpe" type="number" value="7.5" step="0.5" min="1" max="10"/></div>
+      </div>
+      <div class="mt12"><label class="small">Notitie</label><textarea id="m-notes" rows="3" placeholder="Techniek, pijntje, progressie... "></textarea></div>
+      <div class="flex mt16 between">
+        <button class="ghost" id="m-close">Sluiten</button>
+        <button id="m-save">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const SPORTS = [
+  "Basketbal","Voetbal","Hardloper","Trailrunner","Hyrox / Functional",
+  "Hockey","Rugby","Volleybal","Handbal","Boksen/Kickboksen","Judo/BJJ",
+  "Wielrennen","Triathlon","Zwemmen","Roeien","CrossFit","Powerlifting",
+  "Olympisch Gewichtheffen","Calisthenics","Tennis","Badminton","Padel","Schaatsen",
+  "Algemeen – Spiergroei","Algemeen – Kracht","Algemeen – Fitheid"
+];
+const GOALS = ["Spiergroei","Kracht","Power/Explosiviteit","Uithoudingsvermogen","Drempel/Tempo","VO2max","Snelheid/Agility","Vetverlies","Recomp","Mobiliteit/Prehab","Revalidatie-onderhoud","Algemene fitheid"];
+const EXERCISES = [
+  { id:"back-squat", name:"Back Squat", tags:["kracht","spiergroei","basketbal","voetbal","crossfit","powerlifting"], type:"compound", default:{sets:4,reps:5,tempo:"20X1",rest:150}, cues:["Ribben omlaag","Knieën volgen tenen","Volle voet"], video:"https://www.youtube.com/watch?v=1xMaFs0L3ao"},
+  { id:"front-squat", name:"Front Squat", tags:["kracht","spiergroei","basketbal","voetbal","weightlifting"], type:"compound", default:{sets:4,reps:6,tempo:"20X1",rest:120}, cues:["Elleboog hoog","Rechtop","Hakken gegrond"], video:"https://www.youtube.com/watch?v=VAf1q3x8K6w"},
+  { id:"rdl", name:"Romanian Deadlift", tags:["kracht","spiergroei","hardloper","trailrunner","hyrox","powerlifting"], type:"hinge", default:{sets:3,reps:8,tempo:"3121",rest:90}, cues:["Heupen naar achter","Rug neutraal","Rek hamstrings"], video:"https://www.youtube.com/watch?v=2SHsk9Azdg4"},
+  { id:"split-squat", name:"Bulgarian Split Squat", tags:["spiergroei","basketbal","voetbal","hardloper","trailrunner","hyrox"], type:"lunge", default:{sets:3,reps:10,tempo:"3011",rest:75}, cues:["Kleine pas","Borst trots","Knie boven voet"], video:"https://www.youtube.com/watch?v=2C-uNgKwPLE"},
+  { id:"calf-raise", name:"Standing Calf Raise", tags:["hardloper","trailrunner","basketbal","voetbal","hyrox","schaatsen"], type:"isolation", default:{sets:3,reps:12,tempo:"2111",rest:60}, cues:["Volle ROM","1s pauze onderin","Knie licht"], video:"https://www.youtube.com/watch?v=YMmgqO8Jo-k"},
+  { id:"bench-press", name:"Bench Press", tags:["kracht","spiergroei","basketbal","voetbal","hyrox","powerlifting"], type:"press", default:{sets:4,reps:6,tempo:"20X1",rest:150}, cues:["Scapula set","Voeten vast","Controle excentrisch"], video:"https://www.youtube.com/watch?v=rT7DgCr-3pg"},
+  { id:"incline-db-press", name:"Incline DB Press", tags:["spiergroei","hyrox"], type:"press", default:{sets:3,reps:10,tempo:"3011",rest:90}, cues:["Schouders laag","Pols neutraal","Volledige ROM"], video:"https://www.youtube.com/watch?v=SrqOu55lrYU"},
+  { id:"pull-up", name:"Pull-Up / Assisted", tags:["kracht","spiergroei","basketbal","hyrox","calisthenics"], type:"pull", default:{sets:4,reps:6,tempo:"20X1",rest:120}, cues:["Hollow body","Ellebogen langs flanken","Kin boven stang"], video:"https://www.youtube.com/watch?v=eGo4IYlbE5g"},
+  { id:"row", name:"Seated Cable Row", tags:["spiergroei","hyrox","basketbal","voetbal","roeien"], type:"pull", default:{sets:3,reps:12,tempo:"2111",rest:75}, cues:["Schouders laag","Trek naar navel","1s squeeze"], video:"https://www.youtube.com/watch?v=GZbfZ033f74"},
+  { id:"ohp", name:"Overhead Press", tags:["kracht","basketbal","hyrox","weightlifting"], type:"press", default:{sets:4,reps:5,tempo:"20X1",rest:120}, cues:["Glutes aan","Bar recht omhoog","Geen overextensie"], video:"https://www.youtube.com/watch?v=2yjwXTZQDDI"},
+  { id:"box-jump", name:"Box Jump", tags:["basketbal","voetbal","hyrox","crossfit"], type:"jump", default:{sets:4,reps:5,tempo:"explosive",rest:90}, cues:["Armzwaai","Zachte landing","Volle heupstrekking"], video:"https://www.youtube.com/watch?v=52rU9DiFQ8M"},
+  { id:"sled-push", name:"Sled Push", tags:["hyrox","voetbal","basketbal","crossfit"], type:"carry", default:{sets:6,reps:20,unit:"m",rest:60}, cues:["Hoge heupen","Duw via middenvoet","Constante snelheid"], video:"https://www.youtube.com/watch?v=Jf6nqF8FJq0"},
+  { id:"tempo-run", name:"Tempo Run", tags:["hardloper","trailrunner","triathlon"], type:"run", default:{sets:1,reps:20,unit:"min",rest:0}, cues:["Praattempo","Cadans 170–180","Relax schouders"], video:"https://www.youtube.com/watch?v=7W6Rk-0L8cw"},
+  { id:"hill-repeats", name:"Hill Repeats", tags:["trailrunner","hardloper"], type:"run", default:{sets:6,reps:60,unit:"sec",rest:90}, cues:["Korte pas","Knie hoog","Armwerk ritmisch"], video:"https://www.youtube.com/watch?v=7qV2Y8m4s3I"},
+  { id:"farmer-carry", name:"Farmer Carry", tags:["hyrox","basketbal","voetbal","trailrunner","crossfit"], type:"carry", default:{sets:4,reps:40,unit:"m",rest:90}, cues:["Schouders laag","Romp stil","Kleine stappen"], video:"https://www.youtube.com/watch?v=K3a9I3D2oA4"}
+];
+const LIMITS = ["knees","lowerBack","shoulder","ankle","wrist"];
+
+const STATE = JSON.parse(localStorage.getItem('tsg_state')||'null') || {
+  profile:{name:'',age:'',sex:'',height:'',weight:'',sport:SPORTS[0],goal:GOALS[0],days:3,weeks:8,exp:'Gevorderd',loc:'Sportschool',functional:true,freeMode:true,
+    limitations:{knees:false,lowerBack:false,shoulder:false,ankle:false,wrist:false},
+    overload:{method:'linear',pct:2.5,deloadN:0,deloadPct:30,repUp:1}
+  },
+  plan:null, logs:{}
+};
+function persist(){ localStorage.setItem('tsg_state', JSON.stringify(STATE)); }
+
+const $ = (sel,root=document)=> root.querySelector(sel);
+function el(tag, attrs={}, children=[]) { const x=document.createElement(tag); Object.entries(attrs).forEach(([k,v])=>{ if(k==='class') x.className=v; else if(k==='html') x.innerHTML=v; else if(k==='onclick') x.onclick=v; else x.setAttribute(k,v); }); children.forEach(c=> x.append(c)); return x; }
+function slug(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');}
+function setTab(tab){ ["builder","plan","log"].forEach(t=>{ $("#tab-"+t).classList.toggle('hidden', t!==tab); document.querySelector('[data-tab="'+t+'"]').setAttribute('aria-selected', String(t===tab)); }); }
+
+function decideDayType(sport, goal, d, dpw){
+  if (["Hardloper","Trailrunner"].includes(sport)) return d%2?"Run Focus":"Strength Support";
+  if (sport==="Hyrox / Functional") return d%2?"Metcon + Carry":"Kracht Basis";
+  if (goal==="Kracht") return ["Lower","Upper","Full Body","Upper"][(d-1)%4];
+  if (goal==="Spiergroei") return ["Push","Pull","Legs","Full Body"][(d-1)%4];
+  if (goal==="Power/Explosiviteit") return ["Power","Strength","Power","Assistance"][(d-1)%4];
+  if (["Uithoudingsvermogen","VO2max","Drempel/Tempo"].includes(goal)) return d%2?"Engine":"Strength Support";
+  return "Full Body";
+}
+
+function pickExercises(pool, dayType, functional){
+  const byId=id=>pool.find(p=>p.id===id);
+  const add=(arr, ex, o={})=> ex&&arr.push({...ex, prescription:{...ex.default,...o}});
+  const blocks=[];
+  switch(dayType){
+    case "Lower": add(blocks, byId('back-squat')); add(blocks, byId('rdl')); add(blocks, byId('split-squat')); if(functional) add(blocks, byId('farmer-carry'),{sets:3,reps:30,unit:'m'}); add(blocks, byId('calf-raise')); break;
+    case "Upper": add(blocks, byId('bench-press')); add(blocks, byId('pull-up')); add(blocks, byId('row')); add(blocks, byId('ohp'),{sets:3,reps:6}); break;
+    case "Push": add(blocks, byId('bench-press')); add(blocks, byId('incline-db-press')); add(blocks, byId('ohp'),{sets:3,reps:8}); break;
+    case "Pull": add(blocks, byId('pull-up')); add(blocks, byId('row')); add(blocks, byId('rdl')); break;
+    case "Legs": add(blocks, byId('front-squat')); add(blocks, byId('split-squat')); add(blocks, byId('calf-raise')); break;
+    case "Metcon + Carry": add(blocks, byId('sled-push')); add(blocks, byId('farmer-carry')); add(blocks, byId('box-jump')); break;
+    case "Kracht Basis": add(blocks, byId('back-squat')); add(blocks, byId('bench-press')); add(blocks, byId('pull-up')); break;
+    case "Run Focus": add(blocks, byId('tempo-run')); add(blocks, byId('calf-raise')); if(functional) add(blocks, byId('farmer-carry'),{sets:3,reps:40,unit:'m'}); break;
+    case "Strength Support": add(blocks, byId('front-squat')); add(blocks, byId('row')); add(blocks, byId('split-squat')); add(blocks, byId('ohp'),{sets:3,reps:6}); break;
+    case "Power": add(blocks, byId('box-jump')); add(blocks, byId('ohp'),{sets:3,reps:3}); add(blocks, byId('back-squat'),{sets:3,reps:3}); break;
+    case "Engine": add(blocks, byId('tempo-run')); add(blocks, byId('sled-push')); break;
+    default: add(blocks, byId('back-squat')); add(blocks, byId('bench-press')); add(blocks, byId('row'));
+  }
+  return blocks;
+}
+
+function filterPool(exs, sport, goal, limits){
+  let pool = exs.filter(ex=>{
+    const tags = ex.tags.map(t=>t.toLowerCase());
+    return tags.includes(sport.toLowerCase()) || tags.includes(goal.toLowerCase()) || tags.includes('hyrox') || tags.includes('fitheid');
+  });
+  if (limits.knees) pool = pool.filter(ex=>!['box-jump','sled-push','back-squat'].includes(ex.id));
+  if (limits.lowerBack) pool = pool.filter(ex=> ex.id!=='rdl');
+  if (limits.shoulder) pool = pool.filter(ex=> !['ohp','bench-press','incline-db-press'].includes(ex.id));
+  return pool;
+}
+
+function applyProgression(weeks, days, overload, exp, goal){
+  const out=[]; const pct=(overload.pct||0)/100; const deloadN=+overload.deloadN||0; const deloadPct=(overload.deloadPct||0)/100; const repUp=+overload.repUp||1;
+  const volFactor = exp==='Beginner'?0.9 : exp==='Ervaren'?1.15 : 1.0;
+  for(let w=1; w<=weeks; w++){
+    const isDeload = deloadN>0 && w>1 && w%deloadN===0;
+    const loadFactor = overload.method==='linear' ? (isDeload ? (1-deloadPct) : (1 + pct*(w-1))) : 1;
+    const weekDays = days.map(d=>({
+      day:d.day, type:d.type,
+      blocks: d.blocks.map(b=>{
+        const p={...b.prescription};
+        p.sets = Math.max(2, Math.round((p.sets||3)*volFactor));
+        if (goal==='Spiergroei') p.reps = Math.min(12, Math.max(6, (p.reps||8)+2));
+        if (goal==='Kracht') p.reps = Math.max(3, Math.min(6, p.reps||5));
+        if (overload.method==='linear'){ p.loadFactor = +loadFactor.toFixed(3); }
+        else if (overload.method==='reps'){ p.reps = Math.max(3, (p.reps||8) + (w-1)*repUp); }
+        else if (overload.method==='rpe'){ const cycle=[7,7.5,8,6.5]; p.rpeTarget = cycle[(w-1)%cycle.length]; }
+        return {...b, prescription:p};
+      })
+    }));
+    out.push({week:w, days:weekDays});
+  }
+  return out;
+}
+
+function svgDemo(kind){
+  const box = el('div',{class:'svgbox'});
+  const svgNS='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(svgNS,'svg'); svg.setAttribute('viewBox','0 0 120 90'); svg.style.width='100%';
+  const ground=document.createElementNS(svgNS,'line'); ground.setAttribute('x1','0'); ground.setAttribute('y1','85'); ground.setAttribute('x2','120'); ground.setAttribute('y2','85'); ground.setAttribute('stroke','#777'); ground.setAttribute('stroke-width','1'); svg.appendChild(ground);
+  const head=document.createElementNS(svgNS,'circle'); head.setAttribute('cx','60'); head.setAttribute('cy','25'); head.setAttribute('r','6'); head.setAttribute('fill','#e7ecf3'); svg.appendChild(head);
+  const torso=document.createElementNS(svgNS,'line'); torso.setAttribute('x1','60'); torso.setAttribute('y1','31'); torso.setAttribute('x2','60'); torso.setAttribute('y2','70'); torso.setAttribute('stroke','#e7ecf3'); torso.setAttribute('stroke-width','3'); svg.appendChild(torso);
+  const armL=document.createElementNS(svgNS,'line'); const armR=document.createElementNS(svgNS,'line');
+  const legL1=document.createElementNS(svgNS,'line'); const legL2=document.createElementNS(svgNS,'line'); const legR1=document.createElementNS(svgNS,'line'); const legR2=document.createElementNS(svgNS,'line');
+  [armL,armR,legL1,legL2,legR1,legR2].forEach(l=>{l.setAttribute('stroke','#e7ecf3'); l.setAttribute('stroke-width','3'); svg.appendChild(l);});
+  function s(time,f,a=1,p=0){return Math.sin((time/1000+p)*f)*a}
+  function draw(now){
+    const hipY = kind==='squat'? 70+s(now,2,6): kind==='hinge'? 70+s(now,2,3) : 70;
+    const kneeX = 60 + (kind==='run' ? s(now,6,6) : 0);
+    const footX = 40 + (kind==='carry'? s(now,2,2) : 0);
+    armL.setAttribute('x1',60); armL.setAttribute('y1',40); armL.setAttribute('x2',60-15); armL.setAttribute('y2',40+s(now,4,6));
+    armR.setAttribute('x1',60); armR.setAttribute('y1',40); armR.setAttribute('x2',60+15); armR.setAttribute('y2',40-s(now,4,6));
+    legL1.setAttribute('x1',60); legL1.setAttribute('y1',hipY); legL1.setAttribute('x2',kneeX); legL1.setAttribute('y2',hipY+15);
+    legL2.setAttribute('x1',kneeX); legL2.setAttribute('y1',hipY+15); legL2.setAttribute('x2',footX); legL2.setAttribute('y2',85);
+    legR1.setAttribute('x1',60); legR1.setAttribute('y1',hipY); legR1.setAttribute('x2',120-kneeX); legR1.setAttribute('y2',hipY+15);
+    legR2.setAttribute('x1',120-kneeX); legR2.setAttribute('y1',hipY+15); legR2.setAttribute('x2',120-footX); legR2.setAttribute('y2',85);
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+  box.appendChild(svg);
+  const cap=el('div',{class:'note',html:'SVG demo – gratis'}); box.appendChild(cap);
+  return box;
+}
+
+function ytEmbed(url,name){
+  const isYT = /(youtube\.com|youtu\.be)/.test(url||'');
+  if(!isYT){ return el('a',{href:url,target:'_blank',class:'yt'},[el('div',{html:'Open demo'} )]); }
+  let src=url; if(src.includes('watch?v=')) src='https://www.youtube.com/embed/'+src.split('watch?v=')[1].split('&')[0]; if(src.includes('youtu.be/')) src='https://www.youtube.com/embed/'+src.split('youtu.be/')[1].split('?')[0];
+  const box=el('div',{class:'yt'}); const ifr=el('iframe',{title:name,src}); box.appendChild(ifr); return box;
+}
+
+function mapDemoKind(b){
+  const id=b.id||''; const type=b.type||'';
+  if(/box-jump/.test(id)||type==='jump') return 'jump';
+  if(/rdl|hinge/.test(id)||type==='hinge') return 'hinge';
+  if(/press|ohp|bench/.test(id)||type==='press') return 'press';
+  if(/row|pull/.test(id)||type==='pull') return 'pull';
+  if(/carry/.test(id)) return 'carry';
+  if(/run|tempo|hill/.test(id)||type==='run') return 'run';
+  if(/lunge|split/.test(id)) return 'lunge';
+  return type==='compound'?'squat':'squat';
+}
+
+function renderBuilder(){
+  const sSel=document.querySelector('#sport'); const gSel=document.querySelector('#goal');
+  sSel.innerHTML = SPORTS.map(s=>`<option ${STATE.profile.sport===s?'selected':''}>${s}</option>`).join('');
+  gSel.innerHTML = GOALS.map(s=>`<option ${STATE.profile.goal===s?'selected':''}>${s}</option>`).join('');
+  document.querySelector('#name').value=STATE.profile.name; document.querySelector('#age').value=STATE.profile.age; document.querySelector('#sex').value=STATE.profile.sex; document.querySelector('#height').value=STATE.profile.height; document.querySelector('#weight').value=STATE.profile.weight;
+  document.querySelector('#days').value=STATE.profile.days; document.querySelector('#weeks').value=STATE.profile.weeks; document.querySelector('#exp').value=STATE.profile.exp; document.querySelector('#loc').value=STATE.profile.loc; document.querySelector('#functional').checked=STATE.profile.functional; document.querySelector('#freeMode').checked=STATE.profile.freeMode;
+  document.querySelector('#lim-knees').checked=STATE.profile.limitations.knees; document.querySelector('#lim-lowerBack').checked=STATE.profile.limitations.lowerBack; document.querySelector('#lim-shoulder').checked=STATE.profile.limitations.shoulder; document.querySelector('#lim-ankle').checked=STATE.profile.limitations.ankle; document.querySelector('#lim-wrist').checked=STATE.profile.limitations.wrist;
+  document.querySelector('#ol-method').value=STATE.profile.overload.method; document.querySelector('#ol-pct').value=STATE.profile.overload.pct; document.querySelector('#ol-deloadN').value=STATE.profile.overload.deloadN; document.querySelector('#ol-deloadPct').value=STATE.profile.overload.deloadPct; document.querySelector('#ol-repUp').value=STATE.profile.overload.repUp;
+  document.querySelector('#notes').value=STATE.profile.notes||'';
+}
+
+function renderPlan(){
+  const root=document.querySelector('#plan'); root.innerHTML='';
+  const plan=STATE.plan; if(!plan){ root.innerHTML='<div class="note mt8">Genereer eerst een plan.</div>'; return; }
+  document.querySelector('#sessions').textContent='Sessies: '+(plan.weeks.length*plan.weeks[0].days.length);
+  plan.weeks.forEach(week=>{
+    const card=el('div',{class:'card mt12'}); card.append(el('h3',{html:'Week '+week.week}));
+    week.days.forEach(day=>{
+      const dayBox=el('div',{class:'plan-day mt8'}); dayBox.append(el('div',{class:'muted',html:'Dag '+day.day+' · '+day.type}));
+      day.blocks.forEach(b=>{
+        const ex=el('div',{class:'ex mt8'});
+        const left=el('div',{},[
+          el('div',{html:'<strong>'+b.name+'</strong>'}),
+          el('div',{class:'note',html:(b.primary||'')}),
+          el('div',{class:'note mt8',html:(b.cues||[]).map(c=>'• '+c).join('<br>')}),
+          el('div',{class:'mt8',html:`<span class="badge">Voorschrift</span> ${b.prescription.sets}×${b.prescription.reps}${b.prescription.unit?(' '+b.prescription.unit):''} · Tempo ${b.prescription.tempo||'-'} · Rust ${b.prescription.rest||0}s ${b.prescription.loadFactor?('· LF '+b.prescription.loadFactor):''} ${b.prescription.rpeTarget?('· RPE '+b.prescription.rpeTarget):''}`}),
+          el('div',{class:'mt8'},[ el('button',{class:'secondary',html:'Log set/gewicht',onclick:()=>openModal(b)}) ])
+        ]);
+        const right=el('div');
+        if(STATE.profile.freeMode){ right.append(svgDemo(mapDemoKind(b))); }
+        else { right.append(ytEmbed(b.video,b.name)); }
+        ex.append(left); ex.append(right); dayBox.append(ex);
+      });
+      card.append(dayBox);
+    });
+    root.append(card);
+  });
+}
+
+function renderLogs(){
+  const root=document.querySelector('#loglist'); root.innerHTML='';
+  const keys=Object.keys(STATE.logs); if(!keys.length){ root.innerHTML='<div class="note">Nog geen logs…</div>'; return; }
+  keys.forEach(k=>{
+    const entries=STATE.logs[k];
+    const box=el('div',{class:'card mt8'});
+    box.append(el('div',{html:'<strong>'+(entries[0]?.exerciseName||k)+'</strong>'}));
+    const table=el('table',{class:'table mt8'});
+    table.innerHTML='<thead><tr><th>Datum</th><th>Set</th><th>Reps</th><th>Gewicht</th><th>RPE</th><th>Notitie</th><th></th></tr></thead>';
+    const tb=el('tbody'); entries.forEach((e,i)=>{
+      const tr=el('tr');
+      tr.append(el('td',{html:new Date(e.date).toLocaleDateString()}));
+      tr.append(el('td',{html:e.set}));
+      tr.append(el('td',{html:e.reps}));
+      tr.append(el('td',{html:e.weight}));
+      tr.append(el('td',{html:e.rpe}));
+      tr.append(el('td',{html:e.notes||''}));
+      const del=el('td'); const btn=el('button',{class:'ghost',html:'Verwijder',onclick:()=>{ STATE.logs[k]=entries.filter((_,j)=>j!==i); persist(); renderLogs(); }}); del.append(btn); tr.append(del);
+      tb.append(tr);
+    });
+    table.append(tb); box.append(table); root.append(box);
+  });
+}
+
+function onGenerate(){
+  const prof=STATE.profile;
+  prof.name=document.querySelector('#name').value.trim(); prof.age=document.querySelector('#age').value.trim(); prof.sex=document.querySelector('#sex').value; prof.height=document.querySelector('#height').value.trim(); prof.weight=document.querySelector('#weight').value.trim();
+  prof.sport=document.querySelector('#sport').value; prof.goal=document.querySelector('#goal').value; prof.days=+document.querySelector('#days').value; prof.weeks=+document.querySelector('#weeks').value;
+  prof.exp=document.querySelector('#exp').value; prof.loc=document.querySelector('#loc').value; prof.functional=document.querySelector('#functional').checked; prof.freeMode=document.querySelector('#freeMode').checked; prof.notes=document.querySelector('#notes').value;
+  prof.limitations={knees:document.querySelector('#lim-knees').checked,lowerBack:document.querySelector('#lim-lowerBack').checked,shoulder:document.querySelector('#lim-shoulder').checked,ankle:document.querySelector('#lim-ankle').checked,wrist:document.querySelector('#lim-wrist').checked};
+  prof.overload={method:document.querySelector('#ol-method').value,pct:+document.querySelector('#ol-pct').value,deloadN:+document.querySelector('#ol-deloadN').value,deloadPct:+document.querySelector('#ol-deloadPct').value,repUp:+document.querySelector('#ol-repUp').value};
+
+  const pool = filterPool(EXERCISES, prof.sport, prof.goal, prof.limitations);
+  const days=[]; for(let d=1; d<=prof.days; d++){ const type=decideDayType(prof.sport, prof.goal, d, prof.days); days.push({day:d,type,blocks:pickExercises(pool,type,prof.functional)}) }
+  const weeks=applyProgression(prof.weeks, days, {method:prof.overload.method,pct:prof.overload.pct,deloadN:prof.overload.deloadN,deloadPct:prof.overload.deloadPct,repUp:prof.overload.repUp}, prof.exp, prof.goal);
+  STATE.plan={profile:prof,weeks}; persist();
+  setTab('plan'); renderPlan();
+}
+
+let modalCtx=null;
+function openModal(ex){ modalCtx=ex; document.querySelector('#m-exname').textContent=ex.name; document.querySelector('#m-set').value=1; document.querySelector('#m-reps').value=ex.prescription.reps||8; document.querySelector('#m-weight').value=0; document.querySelector('#m-rpe').value=7.5; document.querySelector('#m-notes').value=''; document.querySelector('#modal').classList.add('open'); }
+function closeModal(){ document.querySelector('#modal').classList.remove('open'); }
+function saveModal(){ if(!modalCtx) return; const exId=modalCtx.id; const e={ set:+document.querySelector('#m-set').value, reps:+document.querySelector('#m-reps').value, weight:+document.querySelector('#m-weight').value, rpe:+document.querySelector('#m-rpe').value, notes:document.querySelector('#m-notes').value, date:Date.now(), exerciseName:modalCtx.name };
+  const arr=STATE.logs[exId]?STATE.logs[exId].slice():[]; arr.push(e); STATE.logs[exId]=arr; persist(); closeModal(); renderLogs(); setTab('log'); }
+
+function exportCSV(){ const p=STATE.plan; if(!p) return; const rows=[["Week","Dag","Type","Oefening","Sets","Reps","Tempo","Rust(s)","Eenheid","LoadFactor","RPEtarget"].join(',')];
+  p.weeks.forEach(w=> w.days.forEach(d=> d.blocks.forEach(b=> rows.push([ w.week, d.day, d.type, b.name, b.prescription.sets||'', b.prescription.reps||'', b.prescription.tempo||'', b.prescription.rest||'', b.prescription.unit||'', b.prescription.loadFactor||'', b.prescription.rpeTarget||'' ].join(',')))) );
+  const blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='schema-export-'+Date.now()+'.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+Array.from(document.querySelectorAll('.tab-btn')).forEach(btn=>btn.addEventListener('click',()=>{ setTab(btn.dataset.tab); if(btn.dataset.tab==='plan') renderPlan(); if(btn.dataset.tab==='log') renderLogs(); }));
+document.querySelector('#gen').addEventListener('click', onGenerate);
+document.querySelector('#reset').addEventListener('click', ()=>{ localStorage.removeItem('tsg_state'); location.reload(); });
+document.querySelector('#export').addEventListener('click', exportCSV);
+document.querySelector('#m-close').addEventListener('click', closeModal);
+document.querySelector('#m-save').addEventListener('click', saveModal);
+document.querySelector('#log-add').addEventListener('click', ()=>{
+  const e={ exerciseName:document.querySelector('#log-ex').value||'custom', set:+document.querySelector('#log-set').value, reps:+document.querySelector('#log-reps').value, weight:+document.querySelector('#log-weight').value, rpe:+document.querySelector('#log-rpe').value, notes:document.querySelector('#log-notes').value, date:Date.now() };
+  const exId=slug(e.exerciseName); const arr=STATE.logs[exId]?STATE.logs[exId].slice():[]; arr.push(e); STATE.logs[exId]=arr; persist(); renderLogs(); document.querySelector('#log-notes').value='';
+});
+
+function filterPool(exs, sport, goal, limits){
+  let pool = exs.filter(ex=>{
+    const tags = ex.tags.map(t=>t.toLowerCase());
+    return tags.includes(sport.toLowerCase()) || tags.includes(goal.toLowerCase()) || tags.includes('hyrox') || tags.includes('fitheid');
+  });
+  limits = limits || {};
+  if (limits.knees) pool = pool.filter(ex=>!['box-jump','sled-push','back-squat'].includes(ex.id));
+  if (limits.lowerBack) pool = pool.filter(ex=> ex.id!=='rdl');
+  if (limits.shoulder) pool = pool.filter(ex=> !['ohp','bench-press','incline-db-press'].includes(ex.id));
+  return pool;
+}
+
+renderBuilder(); if(STATE.plan){ setTab('plan'); renderPlan(); } else { setTab('builder'); }
+</script>
+</body>
+</html>
